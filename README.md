@@ -1,8 +1,7 @@
 # NetworkService
-A lightweight networking module for Roblox that provides automatic data compression, rate limiting, and safe remote communication with built-in error handling.
+A networking module for Roblox that provides automatic data compression, rate limiting, and safe remote communication with built-in error handling.
 
 ## Architecture & Design Choices
-- **Integrated Bitpacker Compression:** Automatic table serialization with 40-70% size reduction
 - **Base64 Encoding:** Optional string serialization for cross-platform compatibility
 - **Dual Rate Limiting:** Per-player and global rate limiting with configurable thresholds
 - **Safe Flag System:** Whitelist-based event/function validation for security
@@ -14,32 +13,26 @@ A lightweight networking module for Roblox that provides automatic data compress
 ```lua
 local NetworkService = require(path.to.NetworkService)
 
--- Server side - send to specific player
+-- // Server side - send to specific player
 NetworkService.FireEvent("PlayerUpdate", {
     level = 42,
     experience = 1500,
     inventory = {"sword", "potion", "key"}
 }, player)
 
--- Client side - listen for events
+-- // Client side - listen for events
 NetworkService.ListenToEvent("PlayerUpdate", function(data, player)
     print("Received update:", data.level, data.experience)
-    -- player is nil on client side
+    -- // player is nil on client side
 end)
 
--- Function invocation with return values
+-- // Function invocation with return values
 local response = NetworkService.InvokeFunction("GetPlayerData", {
     playerId = 123456789
 }, targetPlayer)
 ```
 
 ## Key Features
-
-### Data Compression
-- **Automatic Compression:** Tables are automatically packed using Bitpacker when `DataCompression` is enabled
-- **Fallback Handling:** Falls back to raw data if compression fails or increases size
-- **Base64 Serialization:** Optional encoding for string-safe transmission
-- **Size Comparison:** Intelligent compression that only applies when beneficial
 
 ### Rate Limiting
 - **Per-Player Limits:** Individual rate limiting per remote per player
