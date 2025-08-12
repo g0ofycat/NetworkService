@@ -1,7 +1,7 @@
 # NetworkService
 A networking module for Roblox that provides automatic data compression, rate limiting, and safe remote communication with built-in error handling.
 
-## Architecture & Design Choices
+## Overview
 - **Base64 Encoding:** Optional string serialization for cross-platform compatibility
 - **Dual Rate Limiting:** Per-player and global rate limiting with configurable thresholds
 - **Safe Flag System:** Whitelist-based event/function validation for security
@@ -33,6 +33,12 @@ local response = NetworkService.InvokeFunction("GetPlayerData", {
 ```
 
 ## Key Features
+
+### Data Compression
+- **Automatic Compression:** Tables are automatically packed using Bitpacker when `DataCompression` is enabled
+- **Fallback Handling:** Falls back to raw data if compression fails or increases size
+- **Base64 Serialization:** Optional encoding for string-safe transmission
+- **Size Comparison:** Intelligent compression that only applies when beneficial
 
 ### Rate Limiting
 - **Per-Player Limits:** Individual rate limiting per remote per player
