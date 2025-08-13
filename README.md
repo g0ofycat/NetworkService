@@ -1,5 +1,5 @@
 # NetworkService
-A networking module for Roblox that provides automatic data compression, rate limiting, and safe remote communication with built-in error handling.
+A networking module for Roblox that provides automatic data compression, rate limiting, and safe remote communication with built-in error handling. (NOTE: Compression doesn't handle more complex data types like Instances, CFrames, etc)
 
 ## Overview
 - **Base64 Encoding:** Optional string serialization for cross-platform compatibility
