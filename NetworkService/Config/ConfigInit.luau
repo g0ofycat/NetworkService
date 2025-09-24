@@ -4,9 +4,7 @@
 -- // IMPORTS & MAIN
 --=======================
 
-local Types = require(script.Parent.Types)
-
-local Config = {} :: Types.Config
+local Config = {}
 
 --=======================
 -- // PUBLIC TABLES

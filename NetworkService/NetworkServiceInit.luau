@@ -24,7 +24,7 @@ NetworkService.DataCompression = {
 
 -- // References to anything
 NetworkService.References = {
-	Instances = script.Instances
+	Instances = script.Parent.Instances
 }
 
 -- // All services
@@ -71,11 +71,11 @@ local function tryCompress(data: any): (boolean, string?)
 
 	local success, compressed = pcall(function()
 		local packed = NetworkService.DataCompression.Bitpacker.Pack(data)
-		
+
 		if NetworkService.Modules.Config.Main.SerializeData then
 			return NetworkService.DataCompression.Base64.Encode(packed)
 		end
-		
+
 		return packed
 	end)
 
@@ -86,7 +86,7 @@ local function tryCompress(data: any): (boolean, string?)
 
 	local rawSize = NetworkService.DataCompression.Bitpacker.GetCurrentSize(data)
 	local packedSize = NetworkService.DataCompression.Bitpacker.GetPackedSize(data)
-	
+
 	if NetworkService.Modules.Config.Main.SerializeData then
 		packedSize = math.ceil(packedSize / 3) * 4
 	end
@@ -111,7 +111,7 @@ local function tryDecompress(data: string): (boolean, any?)
 			local decoded = NetworkService.DataCompression.Base64.Decode(data)
 			return NetworkService.DataCompression.Bitpacker.Unpack(decoded)
 		end
-		
+
 		return NetworkService.DataCompression.Bitpacker.Unpack(data)
 	end)
 
@@ -137,7 +137,7 @@ local function FireEvents(remoteEvent: RemoteEvent, data: any, remoteType: "Sing
 		local success, err = pcall(function()
 			remoteEvent:FireServer(data)
 		end)
-		
+
 		if not success then
 			warn("[FireEvents] Failed to fire server:", err)
 		end
@@ -147,7 +147,7 @@ local function FireEvents(remoteEvent: RemoteEvent, data: any, remoteType: "Sing
 				local success, err = pcall(function()
 					remoteEvent:FireClient(targetPlayer, data)
 				end)
-				
+
 				if not success then
 					warn("[FireEvents] Failed to fire client:", err)
 				end
@@ -158,7 +158,7 @@ local function FireEvents(remoteEvent: RemoteEvent, data: any, remoteType: "Sing
 			local success, err = pcall(function()
 				remoteEvent:FireAllClients(data)
 			end)
-			
+
 			if not success then
 				warn("[FireEvents] Failed to fire all clients:", err)
 			end
@@ -239,12 +239,12 @@ local function isRateLimited(player: Player, eventName: string): boolean
 	if not NetworkService.Modules.Config.RateLimits.UseRateLimiting then
 		return false
 	end
-	
+
 	local now = os.clock()
 	local debounce = NetworkService.Modules.Config.RateLimits.DebouncePerRemote
 	local limit = NetworkService.Modules.Config.RateLimits.LimitPerRemote
 	local userId = player.UserId
-	
+
 	NetworkService.RateLimitTable[eventName] = NetworkService.RateLimitTable[eventName] or {}
 	local state = NetworkService.RateLimitTable[eventName][userId]
 
@@ -262,7 +262,7 @@ local function isRateLimited(player: Player, eventName: string): boolean
 	end
 
 	state.CallCount += 1
-	
+
 	if state.CallCount > limit then
 		return true
 	end
@@ -320,7 +320,7 @@ function NetworkService.FireEvent(eventName: string, data: any, targetPlayer: Pl
 		warn("[SafeFlags] - You cannot fire a eventName that isn't in Flags.ValidEvents with SafeFlags on.")
 		return
 	end
-	
+
 	if NetworkService.Modules.Config.DataLimits.UseDataLimiting then
 		local packedSize = NetworkService.DataCompression.Bitpacker.GetPackedSize(data)
 		if packedSize > NetworkService.Modules.Config.DataLimits.MaxBytes then
@@ -328,19 +328,19 @@ function NetworkService.FireEvent(eventName: string, data: any, targetPlayer: Pl
 			return
 		end
 	end
-	
+
 	if targetPlayer and isRateLimited(targetPlayer, eventName) then
 		warn("[RateLimit] Player", targetPlayer.Name, "exceeded rate limit for", eventName)
 		return
 	end
-	
+
 	if NetworkService.RunState.IS_SERVER and isGlobalRateLimited(eventName) then
 		warn("[RateLimit] Server global rate limit exceeded for", eventName)
 		return
 	end
-	
+
 	local RemoteEvent = NetworkService.References.Instances.RemoteEvents:FindFirstChild(eventName)
-	
+
 	if not RemoteEvent or not RemoteEvent:IsA("RemoteEvent") then
 		RemoteEvent = Instance.new("RemoteEvent")
 		RemoteEvent.Name = eventName
@@ -348,18 +348,18 @@ function NetworkService.FireEvent(eventName: string, data: any, targetPlayer: Pl
 	end
 
 	local finalData = data
-	
+
 	if NetworkService.Modules.Config.Main.DataCompression and type(data) == "table" then
 		local success, BufferString = tryCompress(data)
-		
+
 		if not success or not BufferString then 
 			warn("[FireEvent] Compression failed for event:", eventName)
-			return 
+			return
 		end
-		
+
 		finalData = BufferString
 	end
-	
+
 	FireEvents(RemoteEvent, finalData, (targetPlayer and "Single" or "All") :: ("Single" | "All"), targetPlayer)
 end
 
@@ -424,9 +424,9 @@ function NetworkService.ListenToEvent(eventName: string, callback: (data: any, p
 		warn("[SafeFlags] - You cannot listen to a eventName that isn't in Flags.ValidEvents with SafeFlags on.")
 		return nil
 	end
-	
+
 	local RemoteEventsFolder = NetworkService.References.Instances.RemoteEvents
-	
+
 	local RemoteEvent = RemoteEventsFolder:FindFirstChild(eventName)
 
 	if not RemoteEvent or not RemoteEvent:IsA("RemoteEvent") then
@@ -482,14 +482,14 @@ function NetworkService.ListenToEvent(eventName: string, callback: (data: any, p
 				warn("[RateLimit] Player", player.Name, "exceeded rate limit for", eventName)
 				return
 			end
-			
+
 			if isGlobalRateLimited(eventName) then
 				warn("[RateLimit] Global rate limit exceeded for", eventName)
 				return
 			end
-			
+
 			local finalData = data
-			
+
 			local playerName = player and player.Name or "UnknownPlayer"
 
 			if NetworkService.Modules.Config.Main.DataCompression then
@@ -527,9 +527,9 @@ function NetworkService.ListenToFunction(functionName: string, callback: (data: 
 		warn("[SafeFlags] - You cannot listen to a functionName that isn't in Flags.ValidFunctions with SafeFlags on.")
 		return nil
 	end
-	
+
 	local RemoteFunctionsFolder = NetworkService.References.Instances.RemoteFunctions
-	
+
 	local RemoteFunction = RemoteFunctionsFolder:FindFirstChild(functionName)
 
 	if not RemoteFunction or not RemoteFunction:IsA("RemoteFunction") then
@@ -543,7 +543,7 @@ function NetworkService.ListenToFunction(functionName: string, callback: (data: 
 			end)
 		end
 	end
-	
+
 	if NetworkService.RunState.IS_SERVER then
 		RemoteFunction.OnServerInvoke = function(player: Player, data: any)
 			if isRateLimited(player, functionName) then

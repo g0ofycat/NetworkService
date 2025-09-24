@@ -6,7 +6,7 @@
 
 local Types = require(script.Parent.Types)
 
-local Bitpacker = {} :: Types.Bitpacker
+local Bitpacker = {}
 
 --=======================
 -- // PRIVATE FUNCTIONS

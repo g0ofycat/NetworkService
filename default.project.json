@@ -1,0 +1,13 @@
+{
+  "name": "NetworkService",
+
+  "tree": {
+    "$className": "DataModel",
+
+    "ReplicatedStorage": {
+      "NetworkService": {
+        "$path": "NetworkService"
+      }
+    }
+  }
+}
