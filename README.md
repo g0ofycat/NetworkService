@@ -15,6 +15,8 @@ Key features:
 ```lua
 local NetworkService = require(path.to.NetworkService)
 
+game.Players.PlayerAdded:Wait() -- // Needed for the client side listeners to load
+
 -- // Fire to all clients
 NetworkService.FireEvent("ChatMessage", { text = "Hello World!" })
 
@@ -24,8 +26,11 @@ NetworkService.FireEvent("PrivateNotice", { text = "Hi!" }, player)
 
 ### Invoking a Function
 ```lua
+game.Players.PlayerAdded:Wait() -- // Needed for the client side listeners to load
+
 -- // Client -> Server
 local result = NetworkService.InvokeFunction("GetData", { id = 123 })
+
 print(result)
 
 -- // Server -> Single Client
@@ -70,22 +75,27 @@ export type NetworkService = {
         Flags: any,
         Config: any
     },
+
     DataCompression: {
         Base64: any,
         Bitpacker: any
     },
+
     References: {
         Instances: Folder
     },
+
     Services: {
         Players: Players,
         ReplicatedStorage: ReplicatedStorage,
         RunService: RunService
     },
+
     RunState: {
         IS_SERVER: boolean,
         IS_CLIENT: boolean
     },
+
     RateLimitTable: { [string]: { [number]: { LastCall: number, CallCount: number } } },
     GlobalRateLimitTable: { [string]: { LastCall: number, CallCount: number } }
 }
