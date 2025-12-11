@@ -4,13 +4,13 @@
 -- // TYPES
 --=======================
 
-export type Flags = {
+export type Events = {
 	ValidEvents: ValidEvents,
 	ValidFunctions: ValidFunctions
 }
 
-export type ValidEvents = { [string]: boolean }
+export type ValidEvents = { string }
 
-export type ValidFunctions = { [string]: boolean }
+export type ValidFunctions = { string }
 
 return nil

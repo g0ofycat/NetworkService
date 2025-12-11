@@ -12,8 +12,7 @@ local Config = {}
 
 Config.Main = {
 	DataCompression = false, -- // true: Turns data compression on, reducing the bandwidth on both the server and the client. Sometimes, the raw data may be bigger than the compressed data. In that case, it will send the raw data instead
-	SerializeData = false, -- // true: Serializes data if DataCompression is on so not invalid UTF-8 gets transmitted. Although Remotes handle serialization, there (may) be a rare chance that it fails. Turning this on makes data have a few extra bytes since this uses Base64
-	SafeFlags = false -- // true: Turns on safe flags. When firing functions or events, their names must be in the Flags module
+	SerializeData = false -- // true: Serializes data if DataCompression is on so not invalid UTF-8 gets transmitted. Although Remotes handle serialization, there (may) be a rare chance that it fails. Turning this on makes data have a few extra bytes since this uses Base64
 }
 
 Config.RateLimits = {

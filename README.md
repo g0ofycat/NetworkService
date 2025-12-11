@@ -1,17 +1,19 @@
 # NetworkService
 
-**NetworkService** is a Roblox module for streamlined **RemoteEvent** and **RemoteFunction** communication between **Server** and **Client**.  
-It provides built-in **data compression**, **rate limiting**, and **safe flag validation**, making remote calls secure and efficient.
+**NetworkService** is a Roblox module for streamlined **RemoteEvent** and **RemoteFunction** communication between **Server** and **Client**.
+
+It provides built-in **data compression** and **rate limiting**, making remote calls secure and efficient.
 
 Key features:
-- Automatic creation/management of `RemoteEvent` and `RemoteFunction`
+
+- Static Creation / Management of `RemoteEvent` and `RemoteFunction`
 - Optional bitpacking + Base64 compression
 - Per-player and global rate limiting
-- SafeFlags to ensure only whitelisted events/functions fire
 
 ## How to Use
 
 ### Firing an Event
+
 ```lua
 local NetworkService = require(path.to.NetworkService)
 
@@ -25,6 +27,7 @@ NetworkService.FireEvent("PrivateNotice", { text = "Hi!" }, player)
 ```
 
 ### Invoking a Function
+
 ```lua
 game.Players.PlayerAdded:Wait() -- // Needed for the client side listeners to load
 
@@ -38,6 +41,7 @@ local data = NetworkService.InvokeFunction("RequestClientInfo", {}, player)
 ```
 
 ### Listening for Events
+
 ```lua
 -- // Client side
 NetworkService.ListenToEvent("ChatMessage", function(data)
@@ -51,10 +55,11 @@ end)
 ```
 
 ### Listening for Functions
+
 ```lua
 -- // Server side
 NetworkService.ListenToFunction("GetData", function(data, player)
-    return { stats = "ok", user = player.UserId }
+    return { status = "ok", user = player.UserId }
 end)
 
 -- // Client side
@@ -64,6 +69,7 @@ end)
 ```
 
 ## API Reference
+
 ```lua
 export type NetworkService = {
     FireEvent: (eventName: string, data: any, targetPlayer: Player?) -> (),

@@ -1,9 +1,5 @@
 --!strict
 
---=======================
--- // IMPORTS & MAIN
---=======================
-
 local NetworkService = {}
 
 --=======================
@@ -12,14 +8,15 @@ local NetworkService = {}
 
 -- // Modules that are meant to serve this module
 NetworkService.Modules = {
-	Flags = require(script.Parent.Flags.FlagsInit),
-	Config = require(script.Parent.Config.ConfigInit)
+	EventCreator = require("./EventCreator"),
+	Events = require("./Events/EventsInit"),
+	Config = require("./Config/ConfigInit")
 }
 
 -- // Data Compression Modules that are integrated into this module
 NetworkService.DataCompression = {
-	Base64 = require(script.Parent.DataCompression.Base64.Base64Init),
-	Bitpacker = require(script.Parent.DataCompression.Bitpacker.BitpackerInit)
+	Base64 = require("./Dependencies/Base64/Base64Init"),
+	Bitpacker = require("./Dependencies/Bitpacker/BitpackerInit")
 }
 
 -- // References to anything
@@ -47,13 +44,21 @@ NetworkService.RateLimitTable = {} :: { [string]: { [number]: { LastCall: number
 NetworkService.GlobalRateLimitTable = {} :: { [string]: { LastCall: number, CallCount: number } }
 
 --=======================
+-- // INIT
+--=======================
+
+if NetworkService.RunState.IS_SERVER then
+	NetworkService.Modules.EventCreator.Init()
+end
+
+--=======================
 -- // HELPER FUNCTIONS
 --=======================
 
 -- CleanupRateLimits(): Cleanups the RateLimit table
 -- @param player: The player to cleanup
 local function CleanupRateLimits(player: Player): ()
-	for eventName, eventTable in pairs(NetworkService.RateLimitTable) do
+	for eventName, eventTable in NetworkService.RateLimitTable do
 		eventTable[player.UserId] = nil
 		if next(eventTable) == nil then
 			NetworkService.RateLimitTable[eventName] = nil
@@ -208,7 +213,7 @@ local function FireFunction(remoteFunction: RemoteFunction, data: any, remoteTyp
 		elseif remoteType == "All" then
 			local results = {}
 
-			for _, player in pairs(NetworkService.Services.Players:GetPlayers()) do
+			for _, player in NetworkService.Services.Players:GetPlayers() do
 				local success, result = pcall(function()
 					return remoteFunction:InvokeClient(player, data)
 				end)
@@ -316,15 +321,10 @@ end
 -- @param data: A table containing the data that you want to transfer and compress if DataCompression is on
 -- @param targetPlayer?: Only needed if you're calling this from Server -> Client; No targetPlayer will trigger :FireAllClients()
 function NetworkService.FireEvent(eventName: string, data: any, targetPlayer: Player?): ()
-	if not NetworkService.Modules.Flags.ValidEvents[eventName] and NetworkService.Modules.Config.Main.SafeFlags then
-		warn("[SafeFlags] - You cannot fire a eventName that isn't in Flags.ValidEvents with SafeFlags on.")
-		return
-	end
-
 	if NetworkService.Modules.Config.DataLimits.UseDataLimiting then
 		local packedSize = NetworkService.DataCompression.Bitpacker.GetPackedSize(data)
 		if packedSize > NetworkService.Modules.Config.DataLimits.MaxBytes then
-			warn("[DataLimits] - Your data exceeded the maximum byte limit. (Bytes: " .. packedSize .. ")")
+			warn("[DataLimits] Your data exceeded the maximum byte limit. (Bytes: " .. packedSize .. ")")
 			return
 		end
 	end
@@ -341,15 +341,22 @@ function NetworkService.FireEvent(eventName: string, data: any, targetPlayer: Pl
 
 	local RemoteEvent = NetworkService.References.Instances.RemoteEvents:FindFirstChild(eventName)
 
-	if not RemoteEvent or not RemoteEvent:IsA("RemoteEvent") then
-		RemoteEvent = Instance.new("RemoteEvent")
-		RemoteEvent.Name = eventName
-		RemoteEvent.Parent = NetworkService.References.Instances.RemoteEvents
+	if not RemoteEvent then
+		if NetworkService.RunState.IS_CLIENT then
+			RemoteEvent = NetworkService.References.Instances.RemoteEvents:WaitForChild(eventName, 10)
+			if not RemoteEvent then
+				error("[FireEvent] RemoteEvent '" .. eventName .. "' failed to replicate from server")
+				return
+			end
+		else
+			error("[FireEvent] RemoteEvent '" .. eventName .. "' does not exist. Add it to ValidEvents in EventsInit.")
+			return
+		end
 	end
 
 	local finalData = data
 
-	if NetworkService.Modules.Config.Main.DataCompression and type(data) == "table" then
+	if NetworkService.Modules.Config.Main.DataCompression and type(data) == "string" and type(data) == "table" then
 		local success, BufferString = tryCompress(data)
 
 		if not success or not BufferString then 
@@ -367,16 +374,12 @@ end
 -- @param functionName: The name of the event (Must be in Flags.ValidFunctions) if SafeFlags on
 -- @param data: A table containing the data that you want to transfer and compress if DataCompression is on
 -- @param targetPlayer?: Only needed if you're calling this from Server -> Client
-function NetworkService.InvokeFunction(functionName: string, data: any, targetPlayer: Player?): ()
-	if not NetworkService.Modules.Flags.ValidFunctions[functionName] and NetworkService.Modules.Config.Main.SafeFlags then
-		warn("[SafeFlags] - You cannot fire a functionName that isn't in Flags.ValidFunctions with SafeFlags on.")
-		return
-	end
-
+-- @return result: any
+function NetworkService.InvokeFunction(functionName: string, data: any, targetPlayer: Player?): any
 	if NetworkService.Modules.Config.DataLimits.UseDataLimiting then
 		local packedSize = NetworkService.DataCompression.Bitpacker.GetPackedSize(data)
 		if packedSize > NetworkService.Modules.Config.DataLimits.MaxBytes then
-			warn("[DataLimits] - Your data exceeded the maximum byte limit. (Bytes: " .. packedSize .. ")")
+			warn("[DataLimits] Your data exceeded the maximum byte limit. (Bytes: " .. packedSize .. ")")
 			return
 		end
 	end
@@ -393,15 +396,22 @@ function NetworkService.InvokeFunction(functionName: string, data: any, targetPl
 
 	local RemoteFunction = NetworkService.References.Instances.RemoteFunctions:FindFirstChild(functionName)
 
-	if not RemoteFunction or not RemoteFunction:IsA("RemoteFunction") then
-		RemoteFunction = Instance.new("RemoteFunction")
-		RemoteFunction.Name = functionName
-		RemoteFunction.Parent = NetworkService.References.Instances.RemoteFunctions
+	if not RemoteFunction then
+		if NetworkService.RunState.IS_CLIENT then
+			RemoteFunction = NetworkService.References.Instances.RemoteFunctions:WaitForChild(functionName, 10)
+			if not RemoteFunction then
+				error("[InvokeFunction] RemoteFunction '" .. functionName .. "' failed to replicate from server")
+				return
+			end
+		else
+			error("[InvokeFunction] RemoteFunction '" .. functionName .. "' does not exist. Add it to ValidFunctions in EventsInit.")
+			return
+		end
 	end
 
 	local finalData = data
 
-	if NetworkService.Modules.Config.Main.DataCompression and type(data) == "table" then
+	if NetworkService.Modules.Config.Main.DataCompression and type(data) == "string" and type(data) == "table" then
 		local success, BufferString = tryCompress(data)
 
 		if not success or not BufferString then 
@@ -420,24 +430,19 @@ end
 -- @param callback: The function to call when the event is received (data, player)
 -- @return RBXScriptConnection: The connection object that can be used to disconnect the listener
 function NetworkService.ListenToEvent(eventName: string, callback: (data: any, player: Player?) -> ()): RBXScriptConnection?
-	if not NetworkService.Modules.Flags.ValidEvents[eventName] and NetworkService.Modules.Config.Main.SafeFlags then
-		warn("[SafeFlags] - You cannot listen to a eventName that isn't in Flags.ValidEvents with SafeFlags on.")
-		return nil
-	end
-
 	local RemoteEventsFolder = NetworkService.References.Instances.RemoteEvents
 
 	local RemoteEvent = RemoteEventsFolder:FindFirstChild(eventName)
 
-	if not RemoteEvent or not RemoteEvent:IsA("RemoteEvent") then
-		if NetworkService.RunState.IS_SERVER then
-			RemoteEvent = Instance.new("RemoteEvent")
-			RemoteEvent.Name = eventName
-			RemoteEvent.Parent = RemoteEventsFolder
+	if not RemoteEvent then
+		if NetworkService.RunState.IS_CLIENT then
+			RemoteEvent = RemoteEventsFolder:WaitForChild(eventName, 10)
+			if not RemoteEvent then
+				error("[ListenToEvent] RemoteEvent '" .. eventName .. "' failed to replicate from server")
+				return
+			end
 		else
-			RemoteEvent = RemoteEventsFolder.ChildAdded:Wait(function(child)
-				return child.Name == eventName and child:IsA("RemoteEvent")
-			end)
+			error("[ListenToEvent] RemoteEvent missing: " .. eventName)
 		end
 	end
 
@@ -453,7 +458,7 @@ function NetworkService.ListenToEvent(eventName: string, callback: (data: any, p
 
 			local finalData = data
 
-			if NetworkService.Modules.Config.Main.DataCompression then
+			if NetworkService.Modules.Config.Main.DataCompression and type(data) == "string" then
 				local success, decompressedData = tryDecompress(data)
 
 				if success then
@@ -492,7 +497,7 @@ function NetworkService.ListenToEvent(eventName: string, callback: (data: any, p
 
 			local playerName = player and player.Name or "UnknownPlayer"
 
-			if NetworkService.Modules.Config.Main.DataCompression then
+			if NetworkService.Modules.Config.Main.DataCompression and type(data) == "string" then
 				local success, decompressedData = tryDecompress(data)
 
 				if success then
@@ -523,24 +528,19 @@ end
 -- @param callback: The function to call when the remote function is invoked (data, player)
 -- @return RemoteFunction: The RemoteFunction instance (you can call :Destroy or remove .OnXInvoke to disconnect)
 function NetworkService.ListenToFunction(functionName: string, callback: (data: any, player: Player?) -> any): RemoteFunction?
-	if not NetworkService.Modules.Flags.ValidFunctions[functionName] and NetworkService.Modules.Config.Main.SafeFlags then
-		warn("[SafeFlags] - You cannot listen to a functionName that isn't in Flags.ValidFunctions with SafeFlags on.")
-		return nil
-	end
-
 	local RemoteFunctionsFolder = NetworkService.References.Instances.RemoteFunctions
 
 	local RemoteFunction = RemoteFunctionsFolder:FindFirstChild(functionName)
 
-	if not RemoteFunction or not RemoteFunction:IsA("RemoteFunction") then
-		if NetworkService.RunState.IS_SERVER then
-			RemoteFunction = Instance.new("RemoteFunction")
-			RemoteFunction.Name = functionName
-			RemoteFunction.Parent = RemoteFunctionsFolder
+	if not RemoteFunction then
+		if NetworkService.RunState.IS_CLIENT then
+			RemoteFunction = RemoteFunctionsFolder:WaitForChild(functionName, 10)
+			if not RemoteFunction then
+				error("[ListenToFunction] RemoteFunction '" .. functionName .. "' failed to replicate from server")
+				return
+			end
 		else
-			RemoteFunction = RemoteFunctionsFolder.ChildAdded:Wait(function(child)
-				return child.Name == functionName and child:IsA("RemoteFunction")
-			end)
+			error("[ListenToFunction] RemoteFunction missing: " .. functionName)
 		end
 	end
 
@@ -558,8 +558,9 @@ function NetworkService.ListenToFunction(functionName: string, callback: (data: 
 
 			local finalData = data
 
-			if NetworkService.Modules.Config.Main.DataCompression then
+			if NetworkService.Modules.Config.Main.DataCompression and type(data) == "string" then
 				local success, decompressed = tryDecompress(data)
+
 				if success then
 					finalData = decompressed
 				else
@@ -588,8 +589,9 @@ function NetworkService.ListenToFunction(functionName: string, callback: (data: 
 
 			local finalData = data
 
-			if NetworkService.Modules.Config.Main.DataCompression then
+			if NetworkService.Modules.Config.Main.DataCompression and type(data) == "string" then
 				local success, decompressed = tryDecompress(data)
+
 				if success then
 					finalData = decompressed
 				else

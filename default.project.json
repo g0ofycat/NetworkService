@@ -6,7 +6,7 @@
 
     "ReplicatedStorage": {
       "NetworkService": {
-        "$path": "NetworkService"
+        "$path": "src"
       }
     }
   }
