@@ -317,7 +317,7 @@ end
 --=======================
 
 -- FireEvent(): Fires a event based on the valid event name. Having no targetPlayer will trigger FireAllClients when calling this event from Server -> Client
--- @param eventName: The name of the event (Must be in Flags.ValidEvents) if SafeFlags on
+-- @param eventName: The name of the event
 -- @param data: A table containing the data that you want to transfer and compress if DataCompression is on
 -- @param targetPlayer?: Only needed if you're calling this from Server -> Client; No targetPlayer will trigger :FireAllClients()
 function NetworkService.FireEvent(eventName: string, data: any, targetPlayer: Player?): ()
@@ -371,7 +371,7 @@ function NetworkService.FireEvent(eventName: string, data: any, targetPlayer: Pl
 end
 
 -- InvokeFunction(): Fires a Function based on the valid event name. Having no targetPlayer will trigger FireAllClients when calling this event from Server -> Client
--- @param functionName: The name of the event (Must be in Flags.ValidFunctions) if SafeFlags on
+-- @param functionName: The name of the event
 -- @param data: A table containing the data that you want to transfer and compress if DataCompression is on
 -- @param targetPlayer?: Only needed if you're calling this from Server -> Client
 -- @return result: any
@@ -426,7 +426,7 @@ function NetworkService.InvokeFunction(functionName: string, data: any, targetPl
 end
 
 -- ListenToEvent(): Creates a listener for a specific event with a callback function. The 'player' callback is nil when Listening on the client
--- @param eventName: The name of the event (Must be in Flags.ValidEvents) if SafeFlags on
+-- @param eventName: The name of the event
 -- @param callback: The function to call when the event is received (data, player)
 -- @return RBXScriptConnection: The connection object that can be used to disconnect the listener
 function NetworkService.ListenToEvent(eventName: string, callback: (data: any, player: Player?) -> ()): RBXScriptConnection?
@@ -524,7 +524,7 @@ function NetworkService.ListenToEvent(eventName: string, callback: (data: any, p
 end
 
 -- ListenToFunction(): Creates a listener for a specific RemoteFunction with a callback
--- @param functionName: The name of the function (Must be in Flags.ValidFunctions if SafeFlags on)
+-- @param functionName: The name of the function
 -- @param callback: The function to call when the remote function is invoked (data, player)
 -- @return RemoteFunction: The RemoteFunction instance (you can call :Destroy or remove .OnXInvoke to disconnect)
 function NetworkService.ListenToFunction(functionName: string, callback: (data: any, player: Player?) -> any): RemoteFunction?
