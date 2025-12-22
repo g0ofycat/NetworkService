@@ -414,9 +414,9 @@ function NetworkService.InvokeFunction(functionName: string, data: any, targetPl
 	if NetworkService.Modules.Config.Main.DataCompression and type(data) == "string" and type(data) == "table" then
 		local success, BufferString = tryCompress(data)
 
-		if not success or not BufferString then 
+		if not success or not BufferString then
 			warn("[InvokeFunction] Compression failed for function:", functionName)
-			return 
+			return
 		end
 
 		finalData = BufferString
