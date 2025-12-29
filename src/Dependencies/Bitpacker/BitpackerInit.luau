@@ -38,7 +38,7 @@ local function GetValueSize(value: any): number
 		return 1 + 1
 	elseif valueType == "table" then
 		local size = 1 + 2
-		for k, v in pairs(value) do
+		for k, v in value do
 			size += GetValueSize(k)
 			size += GetValueSize(v)
 		end
@@ -62,7 +62,7 @@ local function GetRawSize(value: any): number
 		return 1
 	elseif valueType == "table" then
 		local size = 0
-		for k, v in pairs(value) do
+		for k, v in value do
 			size += GetRawSize(k)
 			size += GetRawSize(v)
 		end
@@ -78,7 +78,7 @@ end
 local function CalculateBufferSize(data: Types.PackableTable): number
 	local size = 2
 
-	for key, value in pairs(data) do
+	for key, value in data do
 		size += GetValueSize(key)
 		size += GetValueSize(value)
 	end
@@ -146,10 +146,10 @@ local function WriteValue(buf: buffer, offset: number, value: any): number
 		buffer.writeu8(buf, offset, 8)
 		offset += 1
 		local count = 0
-		for _ in pairs(value) do count += 1 end
+		for _ in value do count += 1 end
 		buffer.writeu16(buf, offset, count)
 		offset += 2
-		for k, v in pairs(value) do
+		for k, v in value do
 			offset = WriteValue(buf, offset, k)
 			offset = WriteValue(buf, offset, v)
 		end
@@ -228,7 +228,7 @@ function Bitpacker.Pack(data: Types.PackableTable): string
 
 	local fieldCount = 0
 	
-	for _ in pairs(data) do
+	for _ in data do
 		fieldCount += 1
 	end
 
@@ -236,7 +236,7 @@ function Bitpacker.Pack(data: Types.PackableTable): string
 	
 	offset += 2
 
-	for key, value in pairs(data) do
+	for key, value in data do
 		offset = WriteValue(buf, offset, key)
 		offset = WriteValue(buf, offset, value)
 	end
@@ -280,7 +280,7 @@ end
 function Bitpacker.GetCurrentSize(data: Types.PackableTable): number
 	local total = 0
 	
-	for k, v in pairs(data) do
+	for k, v in data do
 		total += GetRawSize(k)
 		total += GetRawSize(v)
 	end

@@ -45,7 +45,6 @@ end
 -- @param input: The string to convert
 -- @return string: The decoded string
 function Base64.Decode(input: string): string
-	local output = {}
 	local bytes = {}
 	local map = {}
 
