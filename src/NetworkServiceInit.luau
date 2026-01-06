@@ -425,7 +425,7 @@ function NetworkService.InvokeFunction(functionName: string, data: any, targetPl
 	return FireFunction(RemoteFunction, finalData, (targetPlayer and "Single" or "All") :: ("Single" | "All"), targetPlayer)
 end
 
--- ListenToEvent(): Creates a listener for a specific event with a callback function. The 'player' callback is nil when Listening on the client
+-- ListenToEvent(): Creates a listener for a specific event with a callback function. The 'player' callback is nil when listening on the client
 -- @param eventName: The name of the event
 -- @param callback: The function to call when the event is received (data, player)
 -- @return RBXScriptConnection: The connection object that can be used to disconnect the listener
